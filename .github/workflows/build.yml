@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     name: Build backend
     steps:
-    - name: set env
-      run: echo "NOW=$('%Y.%m.%d')" >> $GITHUB_ENV
     - name: Check out the repo
       uses: actions/checkout@v3
 
@@ -29,5 +27,5 @@ jobs:
         push: true
         platforms: linux/amd64
         context: ./
-        tags: ${{ env.EVOAR_URI }}/backend:${{ env.NOW }}
+        tags: ${{ env.EVOAR_URI }}/backend:latest
   
