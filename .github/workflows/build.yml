@@ -12,7 +12,7 @@ jobs:
     name: Build backend
     steps:
     - name: set env
-      run: echo "::set-env name=NOW::$('%Y-%m-%dT%H:%M:%S')"
+      run: echo "NOW=$('%Y.%m.%d')" >> $GITHUB_ENV
     - name: Check out the repo
       uses: actions/checkout@v3
 
