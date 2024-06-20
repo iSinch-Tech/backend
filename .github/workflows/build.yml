@@ -1,0 +1,32 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+env:
+  EVOAR_URI: cpvptz.cr.cloud.ru
+  NOW: $('%Y-%m-%dT%H:%M:%S')
+jobs:
+  build-backend:
+    runs-on: ubuntu-latest
+    name: Build backend
+    steps:
+    - name: Check out the repo
+      uses: actions/checkout@v3
+
+    - name: Login to Docker
+      uses: docker/login-action@v2
+      with:
+          registry: ${{ env.EVOAR_URI }}
+          username: ${{ secrets.EVOAR_KEYID }}
+          password: ${{ secrets.EVOAR_KEYSECRET }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        push: true
+        platforms: linux/amd64
+        context: ./
+        tags: ${{ env.EVOAR_URI }}/backend:${{ env.NOW }}
+  
