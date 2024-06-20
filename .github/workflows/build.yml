@@ -6,12 +6,13 @@ on:
       - main
 env:
   EVOAR_URI: cpvptz.cr.cloud.ru
-  NOW: $('%Y-%m-%dT%H:%M:%S')
 jobs:
   build-backend:
     runs-on: ubuntu-latest
     name: Build backend
     steps:
+    - name: set env
+      run: echo "::set-env name=NOW::$('%Y-%m-%dT%H:%M:%S')"
     - name: Check out the repo
       uses: actions/checkout@v3
 
