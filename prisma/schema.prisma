@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int        @id @default(autoincrement())
+  name      String     @db.VarChar(255)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     User[]
+  questions Question[]
+  tickets   Ticket[]
+}
+
+model ExamQuestion {
+  examId     Int
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([examId, questionId])
+}
+
+model Exam {
+  id        Int            @id @default(autoincrement())
+  time      Int?
+  questions ExamQuestion[]
+  answers   Json?
+  type      ExamType       @default(EXAM)
+  entityId  Int?
+  userId    Int
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    ExamStatus     @default(CREATED)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  text        String
+  recipientId Int
+  recipient   User     @relation("Recipient_message", fields: [recipientId], references: [id], onDelete: Cascade)
+  senderId    Int
+  sender      User     @relation("Sender_message", fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Question {
+  id           Int              @id @default(autoincrement())
+  name         String
+  text         String?
+  image        String?
+  imageId      Int?
+  imageFile    File?            @relation(fields: [imageId], references: [id])
+  answers      Json
+  categoryId   Int
+  category     Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  tickets      TicketQuestion[]
+  topics       TopicQuestion[]
+  ExamQuestion ExamQuestion[]
+}
+
+model Ticket {
+  id         Int              @id @default(autoincrement())
+  name       String           @db.VarChar(255)
+  categoryId Int
+  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  questions  TicketQuestion[]
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+model TicketQuestion {
+  ticketId   Int
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([ticketId, questionId])
+}
+
+model Topic {
+  id        Int             @id @default(autoincrement())
+  name      String          @db.VarChar(255)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  questions TopicQuestion[]
+}
+
+model TopicQuestion {
+  topicId    Int
+  topic      Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questionId Int
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([topicId, questionId])
+}
+
+model User {
+  id                   Int             @id @default(autoincrement())
+  login                String          @unique @db.VarChar(255)
+  name                 String?         @db.VarChar(255)
+  passwordHash         String          @db.VarChar(255)
+  role                 UserRole        @default(USER)
+  phone                String?         @db.VarChar(255)
+  firebaseToken        Json?
+  status               UserStatus      @default(ACTIVE)
+  exams                Exam[]
+  categoryId           Int?
+  category             Category?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  birthdate            DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  messagesIn           Message[]       @relation("Recipient_message")
+  messagesOut          Message[]       @relation("Sender_message")
+  driverLicenseId      Int?
+  driverLicense        File?           @relation(name: "Driver_license", fields: [driverLicenseId], references: [id])
+  files                File[]          @relation("User_files")
+  schedules            Schedule[]
+  trainerId            Int?
+  trainer              User?           @relation(name: "User_trainer", fields: [trainerId], references: [id])
+  students             User[]          @relation("User_trainer")
+  driveScheduleUser    DriveSchedule[] @relation("Driving_user")
+  driveScheduleTrainer DriveSchedule[] @relation("Driving_trainer")
+}
+
+model File {
+  id        Int        @id @default(autoincrement())
+  name      String
+  type      String
+  path      String
+  size      Int
+  userId    Int
+  user      User       @relation(name: "User_files", fields: [userId], references: [id], onDelete: Cascade)
+  isPublic  Boolean
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  users     User[]     @relation("Driver_license")
+  news      NewsFile[]
+  partners  Partner[]
+  questions Question[]
+}
+
+model News {
+  id          Int        @id @default(autoincrement())
+  title       String
+  description String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  images      NewsFile[]
+}
+
+model NewsFile {
+  newsId    Int
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  fileId    Int
+  file      File     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([newsId, fileId])
+}
+
+model Page {
+  id        Int      @id @default(autoincrement())
+  title     String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Partner {
+  id        Int      @id @default(autoincrement())
+  title     String
+  url       String
+  imageId   Int?
+  image     File?    @relation(fields: [imageId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Schedule {
+  id     Int          @id @default(autoincrement())
+  date   String
+  userId Int?
+  user   User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status RecordStatus @default(OPEN)
+}
+
+model DriveSchedule {
+  id        Int          @id @default(autoincrement())
+  date      DateTime
+  userId    Int?
+  trainerId Int?
+  user      User?        @relation(name: "Driving_user", fields: [userId], references: [id], onDelete: Cascade)
+  trainer   User?        @relation(name: "Driving_trainer", fields: [trainerId], references: [id], onDelete: Cascade)
+  status    RecordStatus @default(OPEN)
+  comment   String?
+}
+
+enum ExamType {
+  TICKET
+  TOPIC
+  EXAM
+}
+
+enum ExamStatus {
+  CREATED
+  PASSED
+  FAILED
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  TRAINER
+  STUDENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  UNCONFIRMED
+}
+
+enum RecordStatus {
+  OPEN
+  CLOSE
+}
