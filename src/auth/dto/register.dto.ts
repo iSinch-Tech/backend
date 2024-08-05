@@ -27,8 +27,8 @@ export class RegisterDto {
   @ApiProperty()
   phone: string;
 
-  @IsDateString()
   @IsOptional()
-  @ApiProperty()
+  @IsDateString()
+  @ApiProperty({ required: false })
   birthdate?: string;
 }

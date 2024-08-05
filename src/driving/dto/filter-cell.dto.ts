@@ -17,6 +17,11 @@ export class FilterCellDto {
   @IsOptional()
   userId?: number | number[] | null;
 
+  @IsInt({ each: true })
+  @Type(() => Number)
+  @IsOptional()
+  trainerId?: number | number[] | null;
+
   @IsEnum(Object.keys(RecordStatus), { each: true })
   @IsOptional()
   status?: RecordStatus | RecordStatus[];

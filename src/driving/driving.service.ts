@@ -9,9 +9,17 @@ import { UpdateCellDto } from './dto/update-cell.dto';
 const SELECT_SCHEME = {
   id: true,
   userId: true,
+  trainerId: true,
   date: true,
   status: true,
+  comment: true,
   user: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  trainer: {
     select: {
       id: true,
       name: true,
@@ -24,29 +32,22 @@ export class DrivingService {
   constructor(private prisma: PrismaService) {}
 
   create(createCellDto: CreateCellDto) {
-    const data = [...Array(createCellDto.count ?? 1)].map(() => {
-      const year = createCellDto.date.getFullYear();
-      const month = String(createCellDto.date.getMonth() + 1).padStart(2, '0');
-      const day = String(createCellDto.date.getDate()).padStart(2, '0');
-      return {
-        date: `${year}-${month}-${day}`,
-      };
-    });
-    return this.prisma.schedule.createMany({
-      data,
+    createCellDto.userId = createCellDto.userId ?? null;
+    return this.prisma.driveSchedule.create({
+      data: createCellDto,
     });
   }
 
   findOne(id: number) {
-    return this.prisma.schedule.findUnique({
+    return this.prisma.driveSchedule.findUnique({
       where: { id },
     });
   }
 
   findAll(filter: FilterCellDto = {}) {
-    const where = prepareFilter(filter) as Prisma.ScheduleWhereInput;
+    const where = prepareFilter(filter) as Prisma.DriveScheduleWhereInput;
 
-    return this.prisma.schedule.findMany({
+    return this.prisma.driveSchedule.findMany({
       where,
       select: SELECT_SCHEME,
     });
@@ -54,7 +55,7 @@ export class DrivingService {
 
   async takeCell(cellId: number, userId: number) {
     const isUserExist =
-      (await this.prisma.schedule.count({
+      (await this.prisma.driveSchedule.count({
         where: {
           userId,
           status: RecordStatus.OPEN,
@@ -65,7 +66,7 @@ export class DrivingService {
     }
 
     const isCellAvailable =
-      (await this.prisma.schedule.count({
+      (await this.prisma.driveSchedule.count({
         where: {
           id: cellId,
           userId: null,
@@ -76,7 +77,7 @@ export class DrivingService {
       throw new BadRequestException('An entry already taken');
     }
 
-    return this.prisma.schedule.update({
+    return this.prisma.driveSchedule.update({
       where: { id: cellId },
       data: { userId },
       select: SELECT_SCHEME,
@@ -84,7 +85,7 @@ export class DrivingService {
   }
 
   update(id: number, updateCellDto: UpdateCellDto) {
-    return this.prisma.schedule.update({
+    return this.prisma.driveSchedule.update({
       where: { id },
       data: updateCellDto,
       select: SELECT_SCHEME,
@@ -92,7 +93,7 @@ export class DrivingService {
   }
 
   remove(id: number) {
-    return this.prisma.schedule.delete({
+    return this.prisma.driveSchedule.delete({
       where: { id },
     });
   }

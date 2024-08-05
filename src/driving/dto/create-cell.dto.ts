@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { RecordStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsDate, IsEnum, IsInt, IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateCellDto {
   @IsDate()
@@ -10,8 +11,23 @@ export class CreateCellDto {
   date: Date;
 
   @IsInt()
-  @Type(() => Number)
+  @ApiProperty()
+  @IsOptional()
+  userId?: number | null;
+
+  @IsInt()
+  @ApiProperty()
+  @IsNotEmpty()
+  trainerId: number;
+
+  @IsEnum(Object.keys(RecordStatus))
+  @IsOptional()
+  @ApiProperty({
+    enum: RecordStatus,
+  })
+  status?: RecordStatus;
+
   @IsOptional()
   @ApiProperty()
-  count?: number;
+  comment?: string;
 }

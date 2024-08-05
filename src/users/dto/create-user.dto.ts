@@ -3,6 +3,7 @@ import { UserRole, UserStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsDate,
+  IsEmail,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -20,6 +21,11 @@ export class CreateUserDto {
   @IsNotEmpty()
   @ApiProperty()
   name: string;
+
+  @IsEmail()
+  @IsOptional()
+  @ApiProperty()
+  email?: string;
 
   @IsString()
   @IsNotEmpty()

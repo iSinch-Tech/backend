@@ -12,6 +12,9 @@ export class UserEntity implements Omit<User, 'passwordHash'> {
   name: string;
 
   @ApiProperty()
+  email: string;
+
+  @ApiProperty()
   passwordHash: string;
 
   @ApiProperty()

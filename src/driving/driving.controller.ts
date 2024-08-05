@@ -4,6 +4,7 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
@@ -24,7 +25,7 @@ import { UserData } from 'src/decorators/userData.decorator';
 import { AuthUserDto } from 'src/auth/dto/auth-user.dto';
 import { UpdateCellDto } from './dto/update-cell.dto';
 
-@Controller('dtiving')
+@Controller('driving')
 @ApiBearerAuth()
 @ApiTags('driving')
 export class DrivingController {
@@ -34,7 +35,6 @@ export class DrivingController {
   @Post()
   @ApiOkResponse({
     type: CellEntity,
-    isArray: true,
   })
   create(
     @Body(new ValidationPipe({ transform: true })) createCellDto: CreateCellDto,
@@ -42,17 +42,24 @@ export class DrivingController {
     return this.drivingService.create(createCellDto);
   }
 
-  @UseGuards(RoleGuard(UserRole.ADMIN))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.TRAINER]))
   @UsePipes(new ValidationPipe({ whitelist: true }))
   @Patch(':id')
   @ApiOkResponse({
     type: CellEntity,
-    isArray: true,
   })
-  update(
+  async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCellDto: UpdateCellDto,
+    @UserData() user: AuthUserDto,
   ) {
+    const cell = await this.drivingService.findOne(id);
+    if (!cell) {
+      throw new NotFoundException();
+    }
+    if (user.role !== UserRole.ADMIN && cell.trainerId !== +user.id) {
+      throw new ForbiddenException();
+    }
     return this.drivingService.update(id, updateCellDto);
   }
 
@@ -63,7 +70,7 @@ export class DrivingController {
     return this.drivingService.remove(id);
   }
 
-  @UseGuards(RoleGuard(UserRole.ADMIN))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.TRAINER]))
   @Get()
   @ApiOkResponse({
     type: CellEntity,
@@ -76,7 +83,7 @@ export class DrivingController {
     return this.drivingService.findAll(filter);
   }
 
-  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.USER]))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
   @Post('/take/:id')
   @ApiOkResponse({
     type: CellEntity,
@@ -85,7 +92,7 @@ export class DrivingController {
     return this.drivingService.takeCell(id, +user.id);
   }
 
-  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.USER]))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
   @Post('/leave/:id')
   @ApiOkResponse({
     type: CellEntity,
@@ -107,7 +114,7 @@ export class DrivingController {
     return this.drivingService.update(id, { userId: null });
   }
 
-  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.USER]))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
   @Get('/available/:month')
   @ApiOkResponse({
     type: CellEntity,
@@ -121,7 +128,7 @@ export class DrivingController {
     });
   }
 
-  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.USER]))
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
   @Get('/my')
   @ApiOkResponse({
     type: CellEntity,

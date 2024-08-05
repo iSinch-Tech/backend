@@ -1,6 +1,6 @@
 import { UserRole, UserStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsString, IsOptional } from 'class-validator';
+import { IsEnum, IsInt, IsString, IsOptional, IsEmail } from 'class-validator';
 
 export class FilterUserDto {
   @IsInt({ each: true })
@@ -15,6 +15,10 @@ export class FilterUserDto {
   @IsString({ each: true })
   @IsOptional()
   name?: string | string[];
+
+  @IsEmail({ each: true })
+  @IsOptional()
+  email?: string | string[];
 
   @IsEnum(Object.keys(UserRole), { each: true })
   @IsOptional()

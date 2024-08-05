@@ -2,6 +2,7 @@ export const userScheme = {
   id: true,
   login: true,
   name: true,
+  email: true,
   role: true,
   categoryId: true,
   phone: true,

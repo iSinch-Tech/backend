@@ -75,7 +75,7 @@ export class AuthController {
       password,
       phone,
       birthdate: birthdate === undefined ? null : new Date(birthdate),
-      status: UserStatus.UNCONFIRMED,
+      status: UserStatus.ACTIVE,
       role: UserRole.USER,
     } as CreateUserDto;
 

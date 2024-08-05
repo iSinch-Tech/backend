@@ -13,4 +13,8 @@ export class UpdateCellDto {
     enum: RecordStatus,
   })
   status?: RecordStatus;
+
+  @IsOptional()
+  @ApiProperty()
+  comment?: string;
 }
