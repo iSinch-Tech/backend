@@ -16,7 +16,6 @@ export class FilterUserDto {
   @IsOptional()
   name?: string | string[];
 
-  @IsEmail({ each: true })
   @IsOptional()
   email?: string | string[];
 
