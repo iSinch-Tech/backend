@@ -8,4 +8,4 @@ import { PrismaModule } from 'src/prisma/prisma.module';
   controllers: [DrivingController],
   providers: [DrivingService],
 })
-export class ScheduleModule {}
+export class DrivingModule {}

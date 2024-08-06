@@ -15,6 +15,7 @@ import { PagesModule } from './pages/pages.module';
 import { PartnersModule } from './partners/partners.module';
 import { NewsModule } from './news/news.module';
 import { ScheduleModule } from './schedule/schedule.module';
+import { DrivingModule } from './driving/driving.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { ScheduleModule } from './schedule/schedule.module';
     PartnersModule,
     NewsModule,
     ScheduleModule,
+    DrivingModule,
   ],
   controllers: [AppController],
   providers: [],

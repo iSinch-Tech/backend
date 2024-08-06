@@ -1,16 +1,12 @@
 import { RecordStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsInt, IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsInt, IsOptional, IsEnum } from 'class-validator';
 
 export class FilterCellDto {
   @IsInt({ each: true })
   @Type(() => Number)
   @IsOptional()
   id?: number | number[];
-
-  @IsString({ each: true })
-  @IsOptional()
-  date?: string | string[];
 
   @IsInt({ each: true })
   @Type(() => Number)

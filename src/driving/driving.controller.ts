@@ -83,6 +83,16 @@ export class DrivingController {
     return this.drivingService.findAll(filter);
   }
 
+  @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.TRAINER]))
+  @Get('/month/:month')
+  @ApiOkResponse({
+    type: CellEntity,
+    isArray: true,
+  })
+  findByMonth(@Param('month') month: string) {
+    return this.drivingService.findByMonth(month);
+  }
+
   @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
   @Post('/take/:id')
   @ApiOkResponse({
@@ -121,10 +131,9 @@ export class DrivingController {
     isArray: true,
   })
   findAvailable(@Param('month') month: string) {
-    return this.drivingService.findAll({
+    return this.drivingService.findByMonth(month, {
       status: RecordStatus.OPEN,
       userId: null,
-      date: `${month}%`,
     });
   }
 
@@ -139,5 +148,15 @@ export class DrivingController {
       status: RecordStatus.OPEN,
       userId: +user.id,
     });
+  }
+
+  @UseGuards(RoleGuard([UserRole.ADMIN]))
+  @Get('/generate/:month')
+  @ApiOkResponse({
+    type: CellEntity,
+    isArray: true,
+  })
+  generate(@Param('month') month: string) {
+    return this.drivingService.generate(month);
   }
 }

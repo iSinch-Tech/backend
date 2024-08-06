@@ -2,9 +2,10 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCellDto } from './dto/create-cell.dto';
 import { prepareFilter } from 'src/helpers/prepareFilter';
-import { Prisma, RecordStatus } from '@prisma/client';
+import { Prisma, RecordStatus, UserRole } from '@prisma/client';
 import { FilterCellDto } from './dto/filter-cell.dto';
 import { UpdateCellDto } from './dto/update-cell.dto';
+import { DateTime, Interval } from 'luxon';
 
 const SELECT_SCHEME = {
   id: true,
@@ -26,6 +27,10 @@ const SELECT_SCHEME = {
     },
   },
 };
+
+const START_TIME = { hour: 9, minute: 0 };
+const END_TIME = { hour: 21, minute: 0 };
+const DURATOIN = { hour: 1 };
 
 @Injectable()
 export class DrivingService {
@@ -53,17 +58,33 @@ export class DrivingService {
     });
   }
 
-  async takeCell(cellId: number, userId: number) {
-    const isUserExist =
-      (await this.prisma.driveSchedule.count({
-        where: {
-          userId,
-          status: RecordStatus.OPEN,
+  findByMonth(month: string, filter: FilterCellDto = {}) {
+    const baseDate = DateTime.fromISO(`${month}-01T00:00:00.00`, {
+      zone: 'utc',
+    });
+
+    return this.prisma.driveSchedule.findMany({
+      where: {
+        date: {
+          gte: baseDate.startOf('month').toISO(),
+          lte: baseDate.endOf('month').toISO(),
         },
-      })) > 0;
-    if (isUserExist) {
-      throw new BadRequestException('An entry already exists for you');
-    }
+        ...prepareFilter(filter),
+      },
+    });
+  }
+
+  async takeCell(cellId: number, userId: number) {
+    // const isUserExist =
+    //   (await this.prisma.driveSchedule.count({
+    //     where: {
+    //       userId,
+    //       status: RecordStatus.OPEN,
+    //     },
+    //   })) > 0;
+    // if (isUserExist) {
+    //   throw new BadRequestException('An entry already exists for you');
+    // }
 
     const isCellAvailable =
       (await this.prisma.driveSchedule.count({
@@ -96,5 +117,45 @@ export class DrivingService {
     return this.prisma.driveSchedule.delete({
       where: { id },
     });
+  }
+
+  async generate(month: string) {
+    const cells = await this.findByMonth(month);
+
+    if (cells.length) {
+      return cells;
+    }
+
+    const trainers = await this.prisma.user.findMany({
+      where: {
+        role: UserRole.TRAINER,
+      },
+    });
+    const baseDate = DateTime.fromISO(`${month}-01T00:00:00.00`, {
+      zone: 'utc',
+    });
+
+    const data: CreateCellDto[] = [];
+    Interval.fromDateTimes(baseDate.startOf('month'), baseDate.endOf('month'))
+      .splitBy({ days: 1 })
+      .forEach(({ start: date }) => {
+        let d = date.set(START_TIME);
+        const endDate = date.set(END_TIME);
+        while (d <= endDate) {
+          trainers.forEach(({ id: trainerId }) => {
+            data.push({
+              date: d.toISO(),
+              trainerId,
+              userId: null,
+              status: RecordStatus.OPEN,
+            });
+          });
+          d = d.plus(DURATOIN);
+        }
+      });
+
+    await this.prisma.driveSchedule.createMany({ data });
+
+    return this.findByMonth(month);
   }
 }
