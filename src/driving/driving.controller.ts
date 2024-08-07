@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -99,7 +100,10 @@ export class DrivingController {
     type: CellEntity,
   })
   take(@Param('id', ParseIntPipe) id: number, @UserData() user: AuthUserDto) {
-    return this.drivingService.takeCell(id, +user.id);
+    if (!user.trainerId) {
+      throw new BadRequestException('You do not have a trainer');
+    }
+    return this.drivingService.takeCell(id, user);
   }
 
   @UseGuards(RoleGuard([UserRole.ADMIN, UserRole.STUDENT, UserRole.TRAINER]))
@@ -130,10 +134,14 @@ export class DrivingController {
     type: CellEntity,
     isArray: true,
   })
-  findAvailable(@Param('month') month: string) {
+  findAvailable(@Param('month') month: string, @UserData() user: AuthUserDto) {
+    if (!user.trainerId) {
+      return [];
+    }
     return this.drivingService.findByMonth(month, {
       status: RecordStatus.OPEN,
       userId: null,
+      trainerId: user.trainerId,
     });
   }
 

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateCellDto } from './dto/create-cell.dto';
 import { prepareFilter } from 'src/helpers/prepareFilter';
@@ -6,6 +10,7 @@ import { Prisma, RecordStatus, UserRole } from '@prisma/client';
 import { FilterCellDto } from './dto/filter-cell.dto';
 import { UpdateCellDto } from './dto/update-cell.dto';
 import { DateTime, Interval } from 'luxon';
+import { AuthUserDto } from 'src/auth/dto/auth-user.dto';
 
 const SELECT_SCHEME = {
   id: true,
@@ -74,33 +79,22 @@ export class DrivingService {
     });
   }
 
-  async takeCell(cellId: number, userId: number) {
-    // const isUserExist =
-    //   (await this.prisma.driveSchedule.count({
-    //     where: {
-    //       userId,
-    //       status: RecordStatus.OPEN,
-    //     },
-    //   })) > 0;
-    // if (isUserExist) {
-    //   throw new BadRequestException('An entry already exists for you');
-    // }
+  async takeCell(cellId: number, user: AuthUserDto) {
+    const cell = await this.findOne(cellId);
 
-    const isCellAvailable =
-      (await this.prisma.driveSchedule.count({
-        where: {
-          id: cellId,
-          userId: null,
-          status: RecordStatus.OPEN,
-        },
-      })) === 1;
-    if (!isCellAvailable) {
+    if (!cell) {
+      throw new NotFoundException();
+    }
+    if (cell.userId !== null || cell.status !== RecordStatus.OPEN) {
       throw new BadRequestException('An entry already taken');
+    }
+    if (cell.trainerId !== user.trainerId) {
+      throw new BadRequestException('Not your trainer');
     }
 
     return this.prisma.driveSchedule.update({
       where: { id: cellId },
-      data: { userId },
+      data: { userId: user.id },
       select: SELECT_SCHEME,
     });
   }
