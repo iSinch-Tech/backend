@@ -17,7 +17,7 @@ export class StatisticsService {
 
   async userStatistics(userId: number): Promise<UserStatistics | null> {
     const user = await this.usersService.findById(userId);
-    if (!user) {
+    if (!user || !user.categoryId) {
       return null;
     }
     const { rows } = await this.examsService.findAll({ userId });
